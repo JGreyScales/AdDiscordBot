@@ -66,12 +66,12 @@ async def on_raw_reaction_add(payload):
 
     if payload.message_id in d.ad_ids and payload.user_id != 813464276240564284:
         for arrays in d.reacted:
-            if payload.user_id == arrays[1]:
+            if payload.user_id == arrays[1] and payload.message_id == arrays[0]:
                 return
         d.reacted.append([payload.message_id, payload.user_id])
         for server in d.servers:
             if payload.guild_id == server[0]:
-                server[4] += 0.11
+                server[4] += server[5]
 
                 return
 
@@ -79,7 +79,7 @@ async def on_raw_reaction_add(payload):
 async def on_ready():
     # typical boot sequence, also creates a 2d array for each server the bot is in
     for server in d.client.guilds:
-        d.servers.append([d.client.guilds[d.ticker].id, 0, d.adchannel, 50, 0.00])
+        d.servers.append([d.client.guilds[d.ticker].id, 0, d.adchannel, 50, 0.00, 0.03])
         d.ticker += 1
     user = ("{0.user}".format(d.client))
     channel = d.client.get_channel(809861589485355099)
