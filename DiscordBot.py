@@ -32,9 +32,10 @@ class definement:
                              "https://cdn.discordapp.com/attachments/797947840507805709/819608418510962728/thismanisgay.png",
                              "https://cdn.discordapp.com/attachments/797947840507805709/819614385676222554/MargretThatcher.jpg"]
         self.addfreq = 50
-        self.debug = True
         self.adsendcheck = True
         self.adchannel = 819611597118504980
+        self.ad_ids = []
+        self.reacted = [[None, None]]
 
 
 d = definement()
@@ -53,40 +54,49 @@ async def sendAd(message):
         if message.guild.id == server[0]:
             adchannel = d.client.get_channel(server[2])
             continue
-    await adchannel.send(d.advertisment[random.randint(0,len(d.advertisment) - 1)])
+    admessage = await adchannel.send(d.advertisment[random.randint(0,len(d.advertisment) - 1)])
+    await admessage.add_reaction("👍")
+    d.ad_ids.append(admessage.id)
 
+
+
+@d.client.event
+async def on_raw_reaction_add(payload):
+    global admessage
+
+    if payload.message_id in d.ad_ids and payload.user_id != 813464276240564284:
+        for arrays in d.reacted:
+            if payload.user_id == arrays[1]:
+                return
+        d.reacted.append([payload.message_id, payload.user_id])
+        for server in d.servers:
+            if payload.guild_id == server[0]:
+                server[4] += 0.11
+
+                return
 
 @d.client.event
 async def on_ready():
     # typical boot sequence, also creates a 2d array for each server the bot is in
-    d.ticker = 0
     for server in d.client.guilds:
-
-
-
-
-        d.servers.append([d.client.guilds[d.ticker].id, 0, d.adchannel, 50])
-
-
-
-
+        d.servers.append([d.client.guilds[d.ticker].id, 0, d.adchannel, 50, 0.00])
         d.ticker += 1
     user = ("{0.user}".format(d.client))
-    if d.debug:
-        channel = d.client.get_channel(809861589485355099)
-        await channel.send((f"```\n\nBot online logged in as {user} \n"
+    channel = d.client.get_channel(809861589485355099)
+    await channel.send((f"```\n\nBot online logged in as {user} \n"
                        f"\nDiscord> {discord.__version__} {discord.version_info}"
                        f" \t|||\tKeyboard> {keyboard.version}"
                        f"\t|||\nPython> {sys.version}/{sys.version_info}```"))
-
-
+    print("bot online")
 
 @d.bot.command()
 @d.client.event
 async def on_message(message):
-    print(d.servers)
     if message.author == d.client.user:
         return
+
+    print(f"Servers: {d.servers}")
+    print(f"Ad ids: {d.ad_ids}")
     # checks where the message was sent and adds 1 to the ticker for that server
     for server in d.servers:
 
@@ -94,24 +104,18 @@ async def on_message(message):
             server[1] += 1
 
             if server[1] % server[3] == 0:
-
                 await sendAd(message)
-                continue
-
-    if d.debug:
-        print(d.servers)
-        print(f"Message has been sent:\t{message.content}\n")
 
     if message.content == d.Prefix + "up":
         await message.channel.send("Currently online")
 
     elif message.content == d.Prefix + "sendad":
         await sendAd(message)
-        if d.debug:
-            print("ad sent")
+        print("ad sent")
 
     elif message.content.startswith(d.Prefix + "adchannel"):
         for server in d.servers:
+
             if message.guild.id == server[0]:
                 null2 = server[2]
                 server[2] = message.channel.id
@@ -119,6 +123,7 @@ async def on_message(message):
 
     elif message.content.startswith(f"{d.Prefix}adfreq"):
         for server in d.servers:
+
             if message.guild.id == server[0]:
                 try:
                     null1 = server[3]
@@ -127,6 +132,12 @@ async def on_message(message):
                 except(ValueError):
                     await message.channel.send("Please include an int")
                     return
+    
+    elif message.content == d.Prefix + "wallet":
+        for server in d.servers:
+            if message.guild.id == server[0]:
+                await message.channel.send(f"Your current balance is: {server[4]}")
+                return
 
 # runs the bot token (env var)
 d.client.run(os.getenv("var1"))
